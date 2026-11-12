@@ -1,0 +1,3 @@
+import {XMLParser,XMLValidator}from 'fast-xml-parser';import {get}from './http.mjs';
+export function unitList(xml){const valid=XMLValidator.validate(xml);if(valid!==true)throw new Error('翻译文件XML无效');const parser=new XMLParser({ignoreAttributes:false,attributeNamePrefix:'@_',isArray:name=>['file','unit','segment','ignorable','note'].includes(name)});const root=parser.parse(xml).xliff;if(!root)throw new Error('缺少xliff根');return (root.file??[]).flatMap(file=>(file.unit??[]).map(unit=>({file:file['@_id'],id:unit['@_id'],segmentCount:(unit.segment??[]).length})));}
+export async function inspect(base,options={}){const xml=await(await get(base,'/labels.xlf?kind='+(options.kind??'first'))).text();return {units:unitList(xml),bytes:Buffer.byteLength(xml)};}

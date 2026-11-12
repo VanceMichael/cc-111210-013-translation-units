@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {inspect,unitList}from '../src/connector.mjs';import {startFixture,labels}from '../fixtures/source.mjs';
+test('翻译单元枚举保留file身份',()=>{assert.deepEqual(unitList(labels()).map(item=>item.id),['u1','u2']);assert.equal(unitList(labels())[0].segmentCount,2);assert.throws(()=>unitList('<xliff><bad></xliff>'),/无效/);});
+test('后续交付可改变源文和内联代码',async()=>{const source=await startFixture();try{assert.equal((await inspect(source.url)).units.length,2);assert.match(labels('changed'),/新版展签/);assert.match(labels('broken'),/target><pc id="2"/);}finally{await source.close();}});
