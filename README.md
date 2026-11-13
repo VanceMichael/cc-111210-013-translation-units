@@ -17,8 +17,10 @@ npm start
 
 ## 接口与模块
 
-`GET /health` 查看状态，`GET /inspect` 查看来源，`GET /receive?key=sample` 保存单次接收，`GET /receipts/sample` 读取回执。相同key和相同内容可重复接收，不同内容拒绝覆盖。
+`GET /health` 查看状态，`GET /inspect` 查看来源，`GET /receive?key=sample` 保存单次查看，`GET /receipts/sample` 读取回执。相同key和相同内容可重复接收，不同内容拒绝覆盖。
 
-`src/connector.mjs` 解释单次来源响应，`fixtures/source.mjs` 提供可重复启动的本地来源，`src/service.mjs` 组织访问入口，`src/store.mjs` 保存查看结果。`test/connector.test.mjs` 验证协议原语和演练源，`test/service.test.mjs` 验证服务与留存边界。
+翻译单元接收使用 `GET /ingest?kind=first&label=首轮交付`：解析 XLIFF 2.0 并返回三类分桶（`accepted` 已接收、`pending` 待翻译/待人工、`invalid` 结构不合法），每条片段附原因代码与中文说明。多次交付在服务端累积裁决，`GET /registry` 查看当前注册表与每轮 `received/retained/replaced/blocked` 历史；注册表带 sha256 校验落盘，重启后恢复。
+
+`src/xliff.mjs` 负责保留顺序与命名空间的解析、内联代码（pc/ph/sc/ec）身份与配对校验、源文指纹；`src/reception.mjs` 按 state/subState/translate 闸门分桶并留存 notes 与 originalData；`src/registry.mjs` 按文件身份、unit、片段与源文指纹做跨交付裁决。`src/connector.mjs` 解释单次来源响应，`fixtures/source.mjs` 提供可重复启动的本地来源（含拆分、复用 unit、跨片段代码、子状态等演练 kind），`src/service.mjs` 组织访问入口，`src/store.mjs` 保存查看结果。`test/` 下覆盖解析原语、接收闸门、跨交付裁决与服务集成。
 
 生产接入地址与凭据需由部署配置给出；演练客户端拒绝访问回环以外的地址。文档中的接口不向外提供任意目标代理。异常以明确错误响应返回，接收失败不覆盖原回执。
